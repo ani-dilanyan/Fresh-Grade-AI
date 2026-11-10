@@ -1,0 +1,13 @@
+# Core application (runs on any laptop, CPU only)
+fastapi>=0.110
+uvicorn[standard]>=0.27
+python-multipart>=0.0.9
+jinja2>=3.1
+pydantic>=2.5
+numpy>=1.24
+opencv-python>=4.8
+PyYAML>=6.0
+reportlab>=4.0
+httpx>=0.25
+onnxruntime>=1.16
+pytest>=7.4

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Live inspection{% endblock %}
+{% block content %}
+<h1>Live inspection</h1>
+<p class="lead">Point the camera at the fruit. Boxes show what the system sees in real time; press <span class="kbd">Space</span> or <strong>Inspect now</strong> for the full quality grade.</p>
+
+<div class="grid grid-2">
+  <section class="card" aria-labelledby="cam-h">
+    <h2 id="cam-h" class="sr-only" style="position:absolute;left:-9999px">Camera</h2>
+    <div class="stage" id="stage">
+      <span class="live-chip" id="liveChip" hidden>● LIVE <span id="fps"></span></span>
+      <video id="video" playsinline muted aria-label="Live camera preview"></video>
+      <canvas id="overlay" class="overlay" aria-hidden="true"></canvas>
+      <p class="placeholder" id="placeholder">Camera is off. Press <strong>Start camera</strong> and allow camera access in your browser.</p>
+    </div>
+    <div class="actions">
+      <button class="btn secondary" id="startBtn" type="button">Start camera</button>
+      <label for="cameraSelect" class="small">Camera</label>
+      <select id="cameraSelect" aria-label="Choose camera"><option value="">Default camera</option></select>
+      <button class="btn big" id="inspectBtn" type="button" disabled aria-keyshortcuts="Space">Inspect now</button>
+      <label class="check"><input type="checkbox" id="useLlm" {% if health.llm_enabled %}checked{% else %}disabled{% endif %}> AI second opinion</label>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </section>
+
+  <aside class="card" aria-labelledby="tips-h">
+    <h2 id="tips-h">Live detections</h2>
+    <ul id="detList" class="reasons" aria-live="off"><li class="muted">No fruit in view yet.</li></ul>
+    <p id="calibState" class="small muted">Calibration card: not detected</p>
+
+    <h3>For best results</h3>
+    <ol class="steps small">
+      <li>Plain, light background (white paper or a light table).</li>
+      <li>Good, even light (a desk lamp works well); avoid strong shadows.</li>
+      <li>Place the <a href="/calibration-card.pdf">printed calibration card</a> next to the fruit to measure real size and weight.</li>
+      <li>Keep the whole fruit in the frame, about 30–50 cm from the camera.</li>
+    </ol>
+    <h3>System</h3>
+    <p class="small muted">Detector: {{ health.detector }}<br>Condition analysis: {{ health.condition_analyzer }}<br>AI inspector: {{ "on" if health.llm_enabled else "off (no API key)" }}</p>
+    <p class="small"><a href="/upload">No camera? Upload a photo instead →</a></p>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}<script src="/static/camera.js"></script>{% endblock %}

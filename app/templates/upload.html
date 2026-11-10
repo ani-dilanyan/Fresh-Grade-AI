@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Upload a photo{% endblock %}
+{% block content %}
+<h1>Upload a photo</h1>
+<p class="lead">Upload a photo of an apple, tomato, orange, banana or lemon. One photo can contain several fruits; each one is graded separately.</p>
+{% if error %}<div class="alert error" role="alert">{{ error }}</div>{% endif %}
+
+<div class="grid grid-2">
+  <section class="card">
+    <form id="uploadForm" action="/upload" method="post" enctype="multipart/form-data">
+      <div class="dropzone" id="dropzone">
+        <p><label for="file">Choose an image</label> (JPG, PNG or WebP, up to 15 MB) or drag it here.</p>
+        <input type="file" id="file" name="file" accept="image/jpeg,image/png,image/webp" required>
+        <img id="preview" class="preview" alt="Preview of the selected image" hidden>
+      </div>
+      <div class="actions">
+        <button class="btn big" type="submit" id="submitBtn">Analyse quality</button>
+        <label class="check"><input type="checkbox" name="use_llm" id="useLlm" value="1" {% if health.llm_enabled %}checked{% else %}disabled{% endif %}> AI second opinion</label>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+  <aside class="card">
+    <h2>Good photos</h2>
+    <ul class="reasons small">
+      <li>Fruit fully visible, filling roughly a quarter of the image or more.</li>
+      <li>Plain background works best for the baseline detector.</li>
+      <li>Add the <a href="/calibration-card.pdf">calibration card</a> to measure size and weight.</li>
+    </ul>
+    <h3>Try sample images</h3>
+    <p class="small muted">Run <code>python tools/make_samples.py</code> to create test images in <code>data/samples/</code>, or download fruit photos from the internet.</p>
+  </aside>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(() => {
+  const form = document.getElementById("uploadForm"), input = document.getElementById("file");
+  const dz = document.getElementById("dropzone"), prev = document.getElementById("preview");
+  const status = document.getElementById("status"), btn = document.getElementById("submitBtn");
+  input.addEventListener("change", () => { const f = input.files[0]; if (f) { prev.src = URL.createObjectURL(f); prev.hidden = false; } });
+  ["dragenter", "dragover"].forEach((t) => dz.addEventListener(t, (e) => { e.preventDefault(); dz.classList.add("drag"); }));
+  ["dragleave", "drop"].forEach((t) => dz.addEventListener(t, (e) => { e.preventDefault(); dz.classList.remove("drag"); }));
+  dz.addEventListener("drop", (e) => { if (e.dataTransfer.files.length) { input.files = e.dataTransfer.files; input.dispatchEvent(new Event("change")); } });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!input.files[0]) { status.textContent = "Please choose an image first."; return; }
+    btn.disabled = true; status.textContent = "Analysing… this takes a few seconds.";
+    const fd = new FormData();
+    fd.append("file", input.files[0]);
+    fd.append("source", "upload");
+    const llm = document.getElementById("useLlm");
+    fd.append("use_llm", llm && llm.checked ? "true" : "false");
+    try {
+      const r = await fetch("/api/inspect", { method: "POST", body: fd });
+      const data = await r.json();
+      if (!r.ok) { status.textContent = data.detail || "Analysis failed."; btn.disabled = false; return; }
+      window.location.href = `/results/${data.inspection_id}`;
+    } catch (err) { status.textContent = "Could not reach the server."; btn.disabled = false; }
+  });
+})();
+</script>
+{% endblock %}

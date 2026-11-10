@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+.env
+data/runtime/
+runs/
+datasets/
+yolo11n-seg.pt
+*.onnx.tmp
+.DS_Store

@@ -1,0 +1,288 @@
+{
+  "_about": "FreshGrade agricultural defect ontology. Quality classes and tolerances are modelled on the structure of the UNECE marketing standards for fresh fruit (Extra Class, Class I, Class II) and the EU marketing standards. Numeric thresholds are project assumptions for image-based grading of the VISIBLE surface and must be cited as such. Owner: Member 3.",
+  "version": "1.0",
+  "quality_classes": [
+    {
+      "id": "Extra",
+      "label": "Extra Class",
+      "description": "Superior quality, characteristic of the variety, practically free from defects."
+    },
+    {
+      "id": "I",
+      "label": "Class I",
+      "description": "Good quality. Slight defects in shape, colour and skin allowed if they do not affect general appearance or keeping quality."
+    },
+    {
+      "id": "II",
+      "label": "Class II",
+      "description": "Satisfies minimum requirements. Skin defects allowed within stricter limits; flesh must be free from major defects."
+    },
+    {
+      "id": "Reject",
+      "label": "Reject / out of grade",
+      "description": "Does not meet minimum requirements (e.g. rot, deterioration). Not fit for fresh market sale."
+    }
+  ],
+  "defect_types": {
+    "bruise": {
+      "label": "Bruise",
+      "measured_by": "defect_pct",
+      "visual_cue": "darker, soft-looking area",
+      "severity": "moderate",
+      "max_class": "II"
+    },
+    "rot": {
+      "label": "Rot / decay",
+      "measured_by": "rotten_prob",
+      "visual_cue": "brown-black spreading region, possibly mould",
+      "severity": "critical",
+      "max_class": "Reject"
+    },
+    "scab_spot": {
+      "label": "Scab / spot",
+      "measured_by": "defect_pct",
+      "visual_cue": "small dark spots on the skin",
+      "severity": "minor",
+      "max_class": "I"
+    },
+    "crack": {
+      "label": "Crack / split",
+      "measured_by": "llm_or_manual",
+      "visual_cue": "linear opening of the skin",
+      "severity": "major",
+      "max_class": "II"
+    },
+    "sunburn_discoloration": {
+      "label": "Sunburn / discolouration",
+      "measured_by": "color_uniformity",
+      "visual_cue": "uneven or bleached colour patch",
+      "severity": "minor",
+      "max_class": "I"
+    },
+    "insect_damage": {
+      "label": "Insect damage",
+      "measured_by": "llm_or_manual",
+      "visual_cue": "small holes or bite marks",
+      "severity": "major",
+      "max_class": "II"
+    }
+  },
+  "hard_rules": {
+    "reject_if_rotten_prob_at_least": 0.7,
+    "reject_if_defect_pct_above": 25.0,
+    "manual_review_if_detection_conf_below": 0.45,
+    "manual_review_if_llm_class_gap_at_least": 2,
+    "llm_reported_rot_forces_review": true,
+    "defect_weight_when_model_sees_fresh": 0.3
+  },
+  "score_weights": {
+    "defect": 0.45,
+    "condition": 0.25,
+    "color": 0.2,
+    "size": 0.1
+  },
+  "fruit_profiles": {
+    "apple": {
+      "label": "Apple",
+      "density_g_per_cm3": 0.8,
+      "typical_weight_g": 180,
+      "target_hue_ranges": [
+        [
+          0,
+          12
+        ],
+        [
+          160,
+          180
+        ],
+        [
+          25,
+          45
+        ]
+      ],
+      "size_mm": {
+        "small_below": 65,
+        "large_above": 80
+      },
+      "classes": {
+        "Extra": {
+          "max_defect_pct": 1.0,
+          "min_uniformity": 0.45,
+          "min_diameter_mm": 65,
+          "max_damage_prob": 0.35,
+          "min_target_color_pct": 0
+        },
+        "I": {
+          "max_defect_pct": 3.0,
+          "min_uniformity": 0.3,
+          "min_diameter_mm": 60,
+          "max_damage_prob": 0.6,
+          "min_target_color_pct": 0
+        },
+        "II": {
+          "max_defect_pct": 8.0,
+          "min_uniformity": 0.0,
+          "min_diameter_mm": 50,
+          "max_damage_prob": 1.0,
+          "min_target_color_pct": 0
+        }
+      }
+    },
+    "tomato": {
+      "label": "Tomato",
+      "density_g_per_cm3": 0.95,
+      "typical_weight_g": 120,
+      "target_hue_ranges": [
+        [
+          0,
+          12
+        ],
+        [
+          165,
+          180
+        ]
+      ],
+      "size_mm": {
+        "small_below": 47,
+        "large_above": 67
+      },
+      "classes": {
+        "Extra": {
+          "max_defect_pct": 1.0,
+          "min_uniformity": 0.45,
+          "min_diameter_mm": 47,
+          "max_damage_prob": 0.35,
+          "min_target_color_pct": 70
+        },
+        "I": {
+          "max_defect_pct": 3.0,
+          "min_uniformity": 0.3,
+          "min_diameter_mm": 40,
+          "max_damage_prob": 0.6,
+          "min_target_color_pct": 50
+        },
+        "II": {
+          "max_defect_pct": 8.0,
+          "min_uniformity": 0.0,
+          "min_diameter_mm": 35,
+          "max_damage_prob": 1.0,
+          "min_target_color_pct": 25
+        }
+      }
+    },
+    "orange": {
+      "label": "Orange",
+      "density_g_per_cm3": 0.87,
+      "typical_weight_g": 200,
+      "target_hue_ranges": [
+        [
+          8,
+          22
+        ]
+      ],
+      "size_mm": {
+        "small_below": 67,
+        "large_above": 84
+      },
+      "classes": {
+        "Extra": {
+          "max_defect_pct": 1.0,
+          "min_uniformity": 0.45,
+          "min_diameter_mm": 60,
+          "max_damage_prob": 0.35,
+          "min_target_color_pct": 80
+        },
+        "I": {
+          "max_defect_pct": 3.0,
+          "min_uniformity": 0.3,
+          "min_diameter_mm": 56,
+          "max_damage_prob": 0.6,
+          "min_target_color_pct": 60
+        },
+        "II": {
+          "max_defect_pct": 8.0,
+          "min_uniformity": 0.0,
+          "min_diameter_mm": 53,
+          "max_damage_prob": 1.0,
+          "min_target_color_pct": 35
+        }
+      }
+    },
+    "banana": {
+      "label": "Banana",
+      "density_g_per_cm3": 0.95,
+      "typical_weight_g": 120,
+      "target_hue_ranges": [
+        [
+          18,
+          34
+        ]
+      ],
+      "size_mm": {
+        "small_below": 140,
+        "large_above": 190
+      },
+      "classes": {
+        "Extra": {
+          "max_defect_pct": 1.5,
+          "min_uniformity": 0.45,
+          "min_diameter_mm": 0,
+          "max_damage_prob": 0.35,
+          "min_target_color_pct": 85
+        },
+        "I": {
+          "max_defect_pct": 4.0,
+          "min_uniformity": 0.3,
+          "min_diameter_mm": 0,
+          "max_damage_prob": 0.6,
+          "min_target_color_pct": 65
+        },
+        "II": {
+          "max_defect_pct": 10.0,
+          "min_uniformity": 0.0,
+          "min_diameter_mm": 0,
+          "max_damage_prob": 1.0,
+          "min_target_color_pct": 40
+        }
+      }
+    },
+    "lemon": {
+      "label": "Lemon",
+      "density_g_per_cm3": 0.9,
+      "typical_weight_g": 110,
+      "target_hue_ranges": [
+        [
+          15,
+          36
+        ]
+      ],
+      "size_mm": {
+        "small_below": 53,
+        "large_above": 67
+      },
+      "classes": {
+        "Extra": {
+          "max_defect_pct": 1.0,
+          "min_uniformity": 0.45,
+          "min_diameter_mm": 50,
+          "max_damage_prob": 0.35,
+          "min_target_color_pct": 80
+        },
+        "I": {
+          "max_defect_pct": 3.0,
+          "min_uniformity": 0.3,
+          "min_diameter_mm": 45,
+          "max_damage_prob": 0.6,
+          "min_target_color_pct": 60
+        },
+        "II": {
+          "max_defect_pct": 8.0,
+          "min_uniformity": 0.0,
+          "min_diameter_mm": 45,
+          "max_damage_prob": 1.0,
+          "min_target_color_pct": 35
+        }
+      }
+    }
+  }
+}

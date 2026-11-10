@@ -1,0 +1,24 @@
+# Mock market prices per kg (EUR) by fruit and quality class. Owner: Member 3.
+currency: EUR
+price_per_kg:
+  apple:  {Extra: 2.40, I: 1.80, II: 1.10, Reject: 0.00}
+  tomato: {Extra: 3.00, I: 2.20, II: 1.30, Reject: 0.00}
+  orange: {Extra: 2.20, I: 1.70, II: 1.00, Reject: 0.00}
+  banana: {Extra: 2.00, I: 1.50, II: 0.90, Reject: 0.00}
+  lemon:  {Extra: 2.80, I: 2.10, II: 1.30, Reject: 0.00}
+
+# Automatic price adjustment policy (used by automation/pricing_job.py). Owner: Member 4.
+markdown_policy:
+  grace_days: 2            # no markdown in the first N days in stock
+  daily_markdown_pct: 5.0  # then reduce price by this % per day
+  floor_pct: 50.0          # never go below this % of the original price
+  class_ii_extra_markdown_pct: 5.0  # extra markdown if Class II share of in-stock items > threshold
+  class_ii_share_threshold: 0.4
+
+# Warehouse bins for sorting sheets: <FRUIT>-<CLASS>
+bin_prefix:
+  apple: APL
+  tomato: TOM
+  orange: ORG
+  banana: BAN
+  lemon: LEM

@@ -1,0 +1,31 @@
+{
+  "top1_accuracy": 0.9959,
+  "recall": {
+    "damaged": 0.9968,
+    "fresh": 0.9941,
+    "rotten": 0.9979
+  },
+  "confusion_matrix": [
+    [
+      938,
+      3,
+      0
+    ],
+    [
+      6,
+      1016,
+      0
+    ],
+    [
+      1,
+      0,
+      477
+    ]
+  ],
+  "labels": [
+    "damaged",
+    "fresh",
+    "rotten"
+  ],
+  "imgsz": 192
+}

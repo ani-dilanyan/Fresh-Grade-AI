@@ -1,0 +1,47 @@
+# FreshGrade AI runtime settings.
+# Each module is selected here, so switching from a baseline/mock to a trained model is a one-line change.
+
+app:
+  title: "FreshGrade AI"
+  max_upload_mb: 15
+  max_image_side_px: 1600     # larger images are resized before analysis
+
+detector:
+  # auto      -> YOLO if ultralytics is installed (custom weights if present, else pretrained COCO),
+  #              falls back to the classical OpenCV detector when YOLO finds nothing or is unavailable
+  # yolo      -> YOLO only
+  # classical -> OpenCV colour segmentation (works best on a plain, light background)
+  # mock      -> fixed fake detection for development
+  type: auto
+  custom_weights: artifacts/fruit_seg.pt     # Member 1's fine-tuned model (optional)
+  pretrained_weights: yolo11n-seg.pt         # downloaded automatically by ultralytics on first use
+  min_confidence: 0.35
+  imgsz: 640
+
+calibration:
+  aruco_dictionary: DICT_4X4_50
+  marker_id: 0
+  marker_size_mm: 50.0
+
+condition:
+  # classical -> OpenCV colour-anomaly analysis (no training needed)
+  # onnx      -> classical defect map + Member 2's trained fresh/rotten classifier (artifacts/condition_classifier.onnx)
+  # mock      -> fixed values
+  type: onnx                                  # falls back to classical automatically if the model file is missing
+  classifier_onnx: artifacts/condition_classifier.onnx
+  classifier_labels: artifacts/condition_classifier_labels.json
+  classifier_meta: artifacts/condition_classifier_meta.json
+
+llm:
+  # anthropic -> Claude vision API (needs ANTHROPIC_API_KEY in .env)
+  # disabled  -> local models only
+  type: anthropic                             # automatically disabled if no API key is set
+  model: claude-sonnet-5-5
+  timeout_s: 12
+  max_tokens: 500
+
+automation:
+  pricing_job_interval_min: 60                # background repricing interval
+
+paths:
+  data_dir: data/runtime                      # database + saved images (override with FRESHGRADE_DATA_DIR)

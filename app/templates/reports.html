@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<h1>Reports</h1>
+<p class="lead">Download warehouse documents and quality reports.</p>
+
+<div class="grid grid-3">
+  <section class="card">
+    <h2>Warehouse</h2>
+    <p class="small muted">Printable sorting sheet of all in-stock items, grouped by bin, with tick boxes for warehouse workers.</p>
+    <div class="actions"><a class="btn" href="/api/reports/sorting-sheet?format=pdf" target="_blank" rel="noopener">Sorting sheet PDF</a>
+    <a class="btn secondary" href="/api/reports/sorting-sheet?format=csv">CSV</a></div>
+    <div class="actions"><a class="btn secondary" href="/api/reports/inventory.csv">Full inventory CSV</a></div>
+  </section>
+  <section class="card">
+    <h2>Grading summary</h2>
+    <ul class="reasons">
+      {% for k, v in CLASS_LABEL.items() %}<li><span class="badge {{ CLASS_CSS[k] }}"><span aria-hidden="true">{{ CLASS_ICON[k] }}</span> {{ v }}</span> {{ stats.items_by_class.get(k, 0) }} item(s)</li>{% endfor %}
+    </ul>
+    <p class="small muted">{{ stats.inspections }} inspections in total.</p>
+  </section>
+  <section class="card">
+    <h2>Calibration card</h2>
+    <p class="small muted">Print at 100% scale and place next to the fruit so the system can measure real size, volume and weight.</p>
+    <div class="actions"><a class="btn" href="/calibration-card.pdf" target="_blank" rel="noopener">Calibration card PDF</a></div>
+  </section>
+</div>
+
+<h2>Recent inspections</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th scope="col">Time (UTC)</th><th scope="col">Inspection</th><th scope="col">Grades</th><th scope="col">Quality report</th><th scope="col">Data</th></tr></thead>
+  <tbody>
+  {% for row in recent %}
+  <tr><td>{{ row.created_at[:19].replace("T", " ") }}</td><td><a href="/results/{{ row.id }}">{{ row.id }}</a></td>
+      <td>{% for s in row.summary %}<span class="badge {{ CLASS_CSS[s.quality_class] }}" style="margin:2px">{{ s.fruit_type }} · {{ CLASS_LABEL[s.quality_class] }}</span>{% endfor %}</td>
+      <td><a href="/api/reports/quality/{{ row.id }}" target="_blank" rel="noopener">PDF</a></td>
+      <td><a href="/api/reports/inspection/{{ row.id }}.json">JSON</a></td></tr>
+  {% else %}
+  <tr><td colspan="5" class="muted">No inspections yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>Recent price changes</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th scope="col">Time (UTC)</th><th scope="col">Item</th><th scope="col" class="num">Old €/kg</th><th scope="col" class="num">New €/kg</th><th scope="col">Reason</th></tr></thead>
+  <tbody>
+  {% for p in prices %}
+  <tr><td>{{ p.created_at[:19].replace("T", " ") }}</td><td>{{ p.item_id }}</td><td class="num">{{ "%.2f"|format(p.old_price) }}</td><td class="num">{{ "%.2f"|format(p.new_price) }}</td><td>{{ p.reason }}</td></tr>
+  {% else %}
+  <tr><td colspan="5" class="muted">No price changes yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

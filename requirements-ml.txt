@@ -1,0 +1,7 @@
+# Deep-learning extras: YOLO11 segmentation (pretrained model is downloaded automatically, ~6 MB)
+# and the training scripts. Installs PyTorch (large download, CPU works fine for the demo).
+-r requirements.txt
+ultralytics>=8.3
+torch>=2.2
+torchvision>=0.17
+onnx>=1.15

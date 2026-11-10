@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Inspection results{% endblock %}
+{% block content %}
+<h1>Inspection results</h1>
+<p class="lead">Inspection <code>{{ r.inspection_id }}</code> · {{ r.created_at[:19].replace("T", " ") }} UTC · {{ r.fruits|length }} fruit(s) · {{ r.processing_ms }} ms · source: {{ r.source }}</p>
+
+<div role="status" aria-live="polite" class="alert ok">
+  {% for f in r.fruits %}Fruit {{ loop.index }}: {{ f.fruit.fruit_type }}, {{ CLASS_LABEL[f.grade.quality_class] }}, score {{ f.grade.score }}, {{ "%.1f"|format(f.condition.defect_pct) }}% defects, {{ "%.2f"|format(f.grade.price_per_kg) }} {{ f.grade.currency }}/kg{% if not loop.last %}. {% endif %}{% endfor %}.
+</div>
+{% for w in r.warnings %}<div class="alert warn">{{ w }}</div>{% endfor %}
+
+<div class="actions">
+  <a class="btn" href="/api/reports/quality/{{ r.inspection_id }}" target="_blank" rel="noopener">Quality report (PDF)</a>
+  <a class="btn secondary" href="/api/reports/sorting-sheet?format=pdf&inspection_id={{ r.inspection_id }}" target="_blank" rel="noopener">Sorting sheet (PDF)</a>
+  <a class="btn secondary" href="/api/reports/inspection/{{ r.inspection_id }}.json">Raw data (JSON)</a>
+  <a class="btn secondary" href="/">Inspect another</a>
+</div>
+
+<div class="grid grid-2">
+  <figure class="figure card">
+    <img src="/media/{{ r.overlay_path }}" alt="Analysed image: {% for f in r.fruits %}fruit {{ loop.index }} {{ f.fruit.fruit_type }} outlined and labelled {{ CLASS_LABEL[f.grade.quality_class] }}{% if not loop.last %}; {% endif %}{% endfor %}. Defects are outlined in magenta.">
+    <figcaption>Segmentation and grading overlay. Fruit outline colour = class (label text also names it); magenta outlines = detected defects{% if r.calibrated %}; blue box = calibration card{% endif %}.</figcaption>
+  </figure>
+  <figure class="figure card">
+    <img src="/media/{{ r.image_path }}" alt="Original photo as captured.">
+    <figcaption>Original image.</figcaption>
+  </figure>
+</div>
+
+{% for f in r.fruits %}
+{% set g = f.grade %}{% set c = f.condition %}{% set geo = f.geometry %}
+<section class="card fruit-card {{ CLASS_CSS[g.quality_class] }}" style="margin-top:16px" aria-labelledby="fruit-{{ loop.index }}">
+  <div class="fruit-head">
+    <h2 id="fruit-{{ loop.index }}" style="margin:0">#{{ loop.index }} {{ f.fruit.fruit_type|capitalize }}</h2>
+    <div class="actions" style="margin:0">
+      <span class="badge big {{ CLASS_CSS[g.quality_class] }}"><span aria-hidden="true">{{ CLASS_ICON[g.quality_class] }}</span> {{ CLASS_LABEL[g.quality_class] }}</span>
+      {% if g.needs_manual_review %}<span class="badge review"><span aria-hidden="true">⚠</span> Manual review</span>{% endif %}
+      <span class="price" aria-label="Price {{ '%.2f'|format(g.price_per_kg) }} {{ g.currency }} per kilogram">{{ "%.2f"|format(g.price_per_kg) }} {{ g.currency }}/kg</span>
+    </div>
+  </div>
+
+  <div class="metrics">
+    <div class="metric"><div class="k">Quality score</div><div class="v">{{ g.score }}/100</div><div class="meter" role="img" aria-label="Score {{ g.score }} of 100"><span style="width:{{ g.score }}%"></span></div></div>
+    <div class="metric"><div class="k">Defect area</div><div class="v">{{ "%.1f"|format(c.defect_pct) }}%</div><div class="k">{{ c.defects|length }} region(s)</div></div>
+    <div class="metric"><div class="k">Colour uniformity</div><div class="v">{{ "%.2f"|format(c.color_uniformity) }}</div><div class="k">target colour {{ "%.0f"|format(c.target_color_pct) }}%</div></div>
+    <div class="metric"><div class="k">Rot probability</div><div class="v">{{ "%.0f"|format(c.rotten_prob * 100) }}%</div>{% if c.condition_label %}<div class="k">damage / ageing {{ "%.0f"|format(c.damage_prob * 100) }}%</div>{% endif %}</div>
+    {% if c.condition_label %}<div class="metric"><div class="k">AI condition model</div><div class="v">{{ c.condition_label|capitalize }}</div><div class="k">{% for k, v in c.condition_probs.items() %}{{ k }} {{ "%.0f"|format(v * 100) }}%{% if not loop.last %} · {% endif %}{% endfor %}</div></div>{% endif %}
+    <div class="metric"><div class="k">Size</div><div class="v">{% if geo.calibrated %}{{ "%.0f"|format(geo.diameter_mm) }} mm{% else %}—{% endif %}</div><div class="k">{% if geo.calibrated %}{{ "%.0f"|format(geo.volume_cm3) }} cm³ · {{ geo.size_class }}{% else %}no calibration card{% endif %}</div></div>
+    <div class="metric"><div class="k">Est. weight / value</div><div class="v">{{ "%.0f"|format(geo.est_weight_g) }} g</div><div class="k">{{ "%.2f"|format(g.item_value) }} {{ g.currency }} · bin {{ g.bin_code }}</div></div>
+    <div class="metric"><div class="k">Confidence</div><div class="v">{{ "%.0f"|format(g.confidence * 100) }}%</div><div class="k">detector {{ "%.0f"|format(f.fruit.confidence*100) }}% ({{ f.fruit.detector }})</div></div>
+  </div>
+
+  <div class="grid grid-2">
+    <div>
+      <h3>Why this grade</h3>
+      <ul class="reasons">{% for reason in g.reasons %}<li>{{ reason }}</li>{% endfor %}</ul>
+      {% if f.llm %}
+      <h3>AI inspector (second opinion)</h3>
+      <p><span class="badge {{ CLASS_CSS[f.llm.suggested_class] }}">{{ CLASS_LABEL[f.llm.suggested_class] }}</span>
+        {% if f.llm.defect_types %}<span class="small muted">defects: {{ f.llm.defect_types|join(", ") }}</span>{% endif %}</p>
+      <p class="small">{{ f.llm.reasoning }}</p>
+      <p class="small muted">{{ f.llm.provider }} · {{ f.llm.latency_ms }} ms</p>
+      {% endif %}
+    </div>
+    {% if c.heatmap_path %}
+    <figure class="figure">
+      <img class="heat" src="/media/{{ c.heatmap_path }}" alt="Defect heat-map of fruit {{ loop.index }}: red areas are the most anomalous parts of the surface; {{ '%.1f'|format(c.defect_pct) }}% of the visible surface is marked as defective.">
+      <figcaption>Defect heat-map (red = most anomalous, white outline = detected defect). Analyzer: {{ c.analyzer }}.</figcaption>
+    </figure>
+    {% endif %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

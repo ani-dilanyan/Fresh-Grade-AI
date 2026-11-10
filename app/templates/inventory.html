@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}Inventory{% endblock %}
+{% block content %}
+<h1>Inventory</h1>
+<p class="lead">Every inspection updates stock automatically. Sellable fruit goes to its sorting bin; rejects are recorded as discarded. Prices are adjusted by the automatic markdown policy.</p>
+{% if msg %}<div class="alert ok" role="status">{{ msg }}</div>{% endif %}
+
+<div class="grid grid-4">
+  <div class="stat"><div class="num">{{ stats.in_stock }}</div><div class="lbl">items in stock</div></div>
+  <div class="stat"><div class="num">{{ "%.2f"|format(stats.stock_value) }} €</div><div class="lbl">stock value</div></div>
+  <div class="stat"><div class="num">{{ stats.inspections }}</div><div class="lbl">inspections</div></div>
+  <div class="stat"><div class="num">{{ stats.manual_review }}</div><div class="lbl">items needing manual review</div></div>
+</div>
+
+<div class="actions">
+  <a class="btn" href="/api/reports/sorting-sheet?format=pdf" target="_blank" rel="noopener">Sorting sheet (PDF)</a>
+  <a class="btn secondary" href="/api/reports/sorting-sheet?format=csv">Sorting sheet (CSV)</a>
+  <a class="btn secondary" href="/api/reports/inventory.csv">Export inventory (CSV)</a>
+</div>
+
+<section class="card">
+  <h2>Automatic price adjustment</h2>
+  <form action="/inventory/reprice" method="post" class="actions">
+    <label for="simulate_days">Simulate extra days in stock</label>
+    <input type="number" id="simulate_days" name="simulate_days" min="0" max="60" step="1" value="0">
+    <button class="btn" type="submit">Run repricing now</button>
+  </form>
+  <p class="small muted">Policy: no markdown for the first 2 days, then −5% per day (floor 50% of the original price); extra −5% on Class II when they exceed 40% of stock. The job also runs automatically every hour. Use “simulate” to demonstrate ageing.</p>
+</section>
+
+<h2>Stock by sorting bin</h2>
+<div class="table-wrap">
+<table>
+  <caption class="small muted">In-stock items grouped by fruit, class and bin</caption>
+  <thead><tr><th scope="col">Bin</th><th scope="col">Fruit</th><th scope="col">Class</th><th scope="col" class="num">Qty</th><th scope="col" class="num">kg</th><th scope="col" class="num">Avg €/kg</th><th scope="col" class="num">Value €</th></tr></thead>
+  <tbody>
+  {% for s in summary %}
+  <tr><td><strong>{{ s.bin_code }}</strong></td><td>{{ s.fruit_type }}</td>
+      <td><span class="badge {{ CLASS_CSS[s.quality_class] }}"><span aria-hidden="true">{{ CLASS_ICON[s.quality_class] }}</span> {{ CLASS_LABEL[s.quality_class] }}</span></td>
+      <td class="num">{{ s.qty }}</td><td class="num">{{ "%.3f"|format(s.kg) }}</td><td class="num">{{ "%.2f"|format(s.avg_price_per_kg) }}</td><td class="num">{{ "%.2f"|format(s.value) }}</td></tr>
+  {% else %}
+  <tr><td colspan="7" class="muted">No stock yet — run an inspection first.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>Items in stock</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th scope="col">Item</th><th scope="col">Fruit</th><th scope="col">Class</th><th scope="col" class="num">Score</th><th scope="col" class="num">Weight g</th><th scope="col" class="num">€/kg</th><th scope="col" class="num">Value €</th><th scope="col">Bin</th><th scope="col">Inspection</th><th scope="col">Actions</th></tr></thead>
+  <tbody>
+  {% for it in items %}
+  <tr>
+    <td>{{ it.id }}</td><td>{{ it.fruit_type }}{% if it.needs_manual_review %} <span class="badge review small">⚠ review</span>{% endif %}</td>
+    <td><span class="badge {{ CLASS_CSS[it.quality_class] }}">{{ CLASS_LABEL[it.quality_class] }}</span></td>
+    <td class="num">{{ it.score }}</td><td class="num">{{ "%.0f"|format(it.est_weight_g) }}</td>
+    <td class="num">{{ "%.2f"|format(it.price_per_kg) }}{% if it.price_per_kg < it.base_price_per_kg %} <span class="small muted">(was {{ "%.2f"|format(it.base_price_per_kg) }})</span>{% endif %}</td>
+    <td class="num">{{ "%.2f"|format(it.item_value) }}</td><td>{{ it.bin_code }}</td>
+    <td><a href="/results/{{ it.inspection_id }}">{{ it.inspection_id[:8] }}</a></td>
+    <td>
+      <form action="/inventory/{{ it.id }}/status" method="post" style="display:inline"><input type="hidden" name="status" value="sold"><button class="btn small secondary" type="submit" aria-label="Mark item {{ it.id }} as sold">Sold</button></form>
+      <form action="/inventory/{{ it.id }}/status" method="post" style="display:inline"><input type="hidden" name="status" value="discarded"><button class="btn small danger" type="submit" aria-label="Discard item {{ it.id }}">Discard</button></form>
+    </td>
+  </tr>
+  {% else %}
+  <tr><td colspan="10" class="muted">No items in stock.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<h2>Inventory ledger (latest 40 events)</h2>
+<div class="table-wrap">
+<table>
+  <thead><tr><th scope="col">Time (UTC)</th><th scope="col">Item</th><th scope="col">Fruit</th><th scope="col">Class</th><th scope="col">Event</th><th scope="col" class="num">Δ qty</th><th scope="col">Note</th></tr></thead>
+  <tbody>
+  {% for l in ledger %}
+  <tr><td>{{ l.created_at[:19].replace("T", " ") }}</td><td>{{ l.item_id }}</td><td>{{ l.fruit_type }}</td><td>{{ CLASS_LABEL[l.quality_class] }}</td><td>{{ l.event }}</td><td class="num">{{ l.quantity_delta }}</td><td>{{ l.note or "" }}</td></tr>
+  {% else %}
+  <tr><td colspan="7" class="muted">No events yet.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}
