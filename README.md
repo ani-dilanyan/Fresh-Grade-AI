@@ -1,6 +1,6 @@
 # FreshGrade AI — Computer-Vision Grading System for Local Produce Quality
 
-UFAR · Faculty of Computer Science and Applied Mathematics · L2 Project S3 (2025-2026)
+UFAR · Faculty of Computer Science and Applied Mathematics · L3 Project S5 (2026-2027)
 
 FreshGrade AI grades apples, tomatoes, oranges, bananas and lemons from a **live camera** or an
 **uploaded photo**:
